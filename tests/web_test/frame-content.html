@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Frame Content — Test</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding:14px; color:#1b2b3a; background:#fbfdff; }
+    label { display:block; margin-bottom:6px; font-size:13px; color:#3b4a59; }
+    input { padding:8px 10px; width:100%; border-radius:6px; border:1px solid #d0e7ff; }
+    .mini { margin-top:12px; font-size:13px; color:#466171; }
+  </style>
+</head>
+<body>
+  <h3>Inside the Test Frame</h3>
+  <p class="mini">This frame has inputs and a small script — useful for Playwright frame handling. (No parent messaging button.)</p>
+
+  <label for="frame-input">Frame text</label>
+  <input id="frame-input" placeholder="Type here to test frames..." />
+
+  <label for="frame-checkbox" style="margin-top:12px;">
+    <input id="frame-checkbox" type="checkbox" /> Toggle a frame state
+  </label>
+
+  <div style="margin-top:10px;">
+    <button id="frame-clear">Clear Frame Inputs</button>
+  </div>
+
+  <script>
+    document.getElementById('frame-clear').addEventListener('click', () => {
+      document.getElementById('frame-input').value = '';
+      document.getElementById('frame-checkbox').checked = false;
+      // Provide a small inline notice for visual verification
+      const note = document.createElement('div');
+      note.textContent = 'Frame cleared';
+      note.style.marginTop = '8px';
+      note.style.fontSize = '13px';
+      note.style.color = '#2b6a4a';
+      document.body.appendChild(note);
+      setTimeout(() => note.remove(), 1800);
+    });
+  </script>
+</body>
+</html>

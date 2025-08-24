@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Child Window</title>
+  <style>
+    body { font-family: Inter, Arial, sans-serif; padding:18px; background:#fffefc; color:#1a2330; }
+    .wrap { max-width:560px; margin:auto; }
+    h2 { margin-top:0; }
+    .info { background:#f6f9ff; padding:12px; border-radius:8px; border:1px solid #e1e8ff; }
+    .btn { margin-top:12px; padding:10px 12px; border-radius:8px; border:none; background:#2b7cff;color:#fff; cursor:pointer; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h2>Example Child Page</h2>
+    <p class="info">This page is opened by the main test page (same-origin). Useful for testing new window handling and cross-window checks. No external images are included here.</p>
+
+    <div>
+      <button class="btn" id="close-self">Close window</button>
+    </div>
+  </div>
+
+  <script>
+    document.getElementById('close-self').addEventListener('click', () => {
+      window.close();
+    });
+
+    // Notify opener that the child is ready (same-origin)
+    if (window.opener && typeof window.opener.postMessage === 'function') {
+      try {
+        window.opener.postMessage({ from: 'child', ready: true }, '*');
+      } catch (e) {
+        // ignore if cross-origin or blocked
+      }
+    }
+  </script>
+</body>
+</html>

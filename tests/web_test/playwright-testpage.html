@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Custom Playwright Interaction Playground</title>
+  <style>
+    :root {
+      --bg: #eef6fb;
+      --card: #ffffff;
+      --accent: #2b7cff;
+      --accent-2: #ff6b35;
+      --muted: #555;
+    }
+    html,body { height:100%; margin:0; font-family: "Segoe UI", Roboto, Arial, sans-serif; background:var(--bg); }
+    .wrap { max-width:980px; margin:28px auto; padding:22px; background:var(--card); border-radius:10px; box-shadow:0 6px 22px rgba(20,30,60,0.08); }
+    h1 { margin:0 0 8px 0; color:#123; font-size:1.6rem; }
+    p.lead { color:var(--muted); margin:0 0 18px 0; }
+
+    .row { display:flex; gap:18px; flex-wrap:wrap; }
+    .panel { flex:1 1 300px; padding:14px; background:#fbfdff; border-radius:8px; border:1px solid rgba(10,10,30,0.03); }
+
+    button { font-size:15px; padding:10px 14px; border-radius:8px; border:none; cursor:pointer; }
+    .btn-accent { background:var(--accent); color:#fff; }
+    .btn-alt { background:var(--accent-2); color:#fff; }
+
+    /* Drag & drop */
+    .draggable { width:120px; height:48px; display:flex; align-items:center; justify-content:center; border-radius:8px; cursor:grab; user-select:none; }
+    .drag-one { background:#9fe0ff; color:#033; }
+    .drop-zone { min-height:90px; border:2px dashed rgba(10,10,30,0.12); border-radius:8px; display:flex; align-items:center; justify-content:center; padding:10px; color:var(--muted); }
+
+    /* Context menu */
+    .custom-menu { position:fixed; background:#222; color:#fff; padding:8px 10px; border-radius:6px; font-size:14px; z-index:9999; display:none; box-shadow:0 6px 18px rgba(0,0,0,0.25); }
+
+    /* small form */
+    .form-row { margin-bottom:10px; }
+    label { display:block; font-size:13px; color:var(--muted); margin-bottom:6px; }
+    input[type="text"], input[type="tel"], input[type="email"] { width:100%; padding:9px 10px; border-radius:6px; border:1px solid #d9e6f5; }
+
+    .alert-box { padding:10px; border-radius:6px; display:none; margin-top:8px; }
+
+    .badge {
+      display:inline-block;
+      padding:6px 10px;
+      background:#fff4c2;
+      border:1px solid #f0d88a;
+      border-radius:12px;
+      margin-top:8px;
+      font-size:13px;
+      color:#4b3a00;
+    }
+
+    footer { margin-top:18px; font-size:13px; color:var(--muted); text-align:center; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Playwright Interaction Playground — Custom</h1>
+    <p class="lead">A compact page for testing element interactions: hover, context menu, double-click actions, drag & drop, alerts, popup windows and navigation.</p>
+
+    <div class="row">
+      <!-- Buttons & hover / double-click / context -->
+      <div class="panel" id="panel-controls">
+        <h3>Button Interactions</h3>
+        <p style="margin:6px 0 12px 0;color:var(--muted)">Hover, right-click, double-click and keyboard focus tests.</p>
+
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <button id="btn-hover" class="btn-accent" title="hover me">Move Pointer Here</button>
+          <button id="btn-ctx" class="btn-alt">Right-Click Menu</button>
+          <button id="btn-dbl" class="btn-accent">Double-Click Surprise</button>
+        </div>
+
+        <div style="margin-top:12px;">
+          <small style="color:var(--muted)">Hover button text changes; right-click shows a custom context menu; double-click appends a small badge entry below.</small>
+        </div>
+
+        <div id="mini-gallery" style="margin-top:12px; min-height:40px;"></div>
+      </div>
+
+      <!-- Drag & Drop -->
+      <div class="panel" id="panel-drag">
+        <h3>Drag & Drop</h3>
+        <p style="color:var(--muted); margin:0 0 12px 0;">Drag the blue card into the target. Tests both pointer and drag events.</p>
+        <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
+          <div id="drag-card" class="draggable drag-one" draggable="true" data-role="card">DRAG CARD</div>
+          <div id="drop-target" class="drop-zone">Drop target</div>
+        </div>
+
+        <div style="margin-top:10px;">
+          <button id="reset-drop" style="background:#eee;color:#111;padding:8px 10px;border-radius:6px;">Reset Drop</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="row" style="margin-top:18px;">
+      <!-- Alerts & popups -->
+      <div class="panel">
+        <h3>Alerts & Popup Window</h3>
+        <p style="color:var(--muted);margin:0 0 12px 0;">Native dialogs and new window tests.</p>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <button id="native-alert" class="btn-accent">Trigger Alert</button>
+          <button id="native-confirm" class="btn-alt">Trigger Confirm</button>
+          <button id="open-child" style="background:#1b9a6f;color:#fff;">Open Child Window</button>
+        </div>
+        <div id="dlg-result" class="alert-box" style="background:#fff3cd;border:1px solid #f5dcb2;color:#4b3a00;"></div>
+      </div>
+
+      <!-- Navigation (iframe removed) -->
+      <div class="panel">
+        <h3>Navigation</h3>
+        <p style="color:var(--muted);margin:0 0 12px 0;">Open an internal page; iframe features have been removed from this page.</p>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px;">
+          <button id="open-new-page" style="background:#8b5cf6;color:#fff;">Open Example Page</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="row" style="margin-top:18px;">
+      <div class="panel" style="flex-basis:100%;">
+        <h3>Form & Validation</h3>
+        <p style="color:var(--muted);margin:0 0 12px 0;">Small registration form with inline validation and display.</p>
+
+        <div style="max-width:680px;">
+          <div class="form-row">
+            <label for="first_name">Given name</label>
+            <input id="first_name" type="text" placeholder="Anna" />
+          </div>
+          <div class="form-row">
+            <label for="email_addr">Email</label>
+            <input id="email_addr" type="email" placeholder="you@example.com" />
+          </div>
+          <div class="form-row">
+            <label for="phone">Phone</label>
+            <input id="phone" type="tel" placeholder="+46 70 123 45 67" />
+          </div>
+          <div style="display:flex;gap:8px;">
+            <button id="submit-reg" class="btn-accent">Register</button>
+            <button id="clear-reg" style="background:#eee;color:#111;border-radius:8px;">Clear</button>
+          </div>
+
+          <div id="reg-success" class="alert-box" style="background:#e6ffef;border:1px solid #bfe7cc;color:#14421b;margin-top:10px;"></div>
+          <div id="reg-error" class="alert-box" style="background:#ffdede;border:1px solid #f0b6b6;color:#6a1919;margin-top:10px;"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="custom-menu" id="customMenu">
+      <div id="menu-action" style="cursor:pointer;">Custom Option: Inspect</div>
+    </div>
+
+    <footer>Made for Playwright — file: <strong>playwright-testpage.html</strong></footer>
+  </div>
+
+<script>
+  // ---------- Hover text change ----------
+  const btnHover = document.getElementById('btn-hover');
+  btnHover.addEventListener('mouseenter', () => btnHover.textContent = 'Pointer Detected');
+  btnHover.addEventListener('mouseleave', () => btnHover.textContent = 'Move Pointer Here');
+
+  // ---------- Custom Context Menu (right-click) ----------
+  const btnCtx = document.getElementById('btn-ctx');
+  const customMenu = document.getElementById('customMenu');
+
+  btnCtx.addEventListener('contextmenu', (e) => {
+    e.preventDefault();
+    customMenu.style.left = e.clientX + 'px';
+    customMenu.style.top = e.clientY + 'px';
+    customMenu.style.display = 'block';
+  });
+
+  document.addEventListener('click', (e) => {
+    if (!customMenu.contains(e.target)) customMenu.style.display = 'none';
+  });
+
+  document.getElementById('menu-action').addEventListener('click', () => {
+    alert('Custom menu action triggered.');
+    customMenu.style.display = 'none';
+  });
+
+  // ---------- Double-click appends a badge (no images) ----------
+  const btnDbl = document.getElementById('btn-dbl');
+  const gallery = document.getElementById('mini-gallery');
+  btnDbl.addEventListener('dblclick', () => {
+    const badge = document.createElement('span');
+    badge.className = 'badge';
+    badge.textContent = `Badge at ${new Date().toLocaleTimeString()}`;
+    gallery.appendChild(badge);
+  });
+
+  // ---------- Drag & drop ----------
+  const dragCard = document.getElementById('drag-card');
+  const dropTarget = document.getElementById('drop-target');
+
+  dragCard.addEventListener('dragstart', (ev) => {
+    ev.dataTransfer.setData('text/plain', ev.target.dataset.role || 'card');
+    ev.dataTransfer.effectAllowed = 'move';
+  });
+
+  dropTarget.addEventListener('dragover', (ev) => {
+    ev.preventDefault();
+    dropTarget.style.background = 'rgba(43,124,255,0.06)';
+  });
+
+  dropTarget.addEventListener('dragleave', () => {
+    dropTarget.style.background = '';
+  });
+
+  dropTarget.addEventListener('drop', (ev) => {
+    ev.preventDefault();
+    dropTarget.style.background = '';
+    const role = ev.dataTransfer.getData('text/plain');
+    dropTarget.textContent = `Dropped: ${role.toUpperCase()}`;
+    const clone = document.createElement('div');
+    clone.textContent = `Item: ${role}`;
+    clone.style.marginTop = '8px';
+    clone.style.padding = '6px';
+    clone.style.border = '1px solid rgba(0,0,0,0.06)';
+    clone.style.borderRadius = '6px';
+    dropTarget.appendChild(clone);
+  });
+
+  document.getElementById('reset-drop').addEventListener('click', () => {
+    dropTarget.textContent = 'Drop target';
+    Array.from(dropTarget.querySelectorAll('div')).forEach(el => el.remove());
+  });
+
+  // ---------- Alerts & confirm ----------
+  const alertBtn = document.getElementById('native-alert');
+  const confirmBtn = document.getElementById('native-confirm');
+  const dlgResult = document.getElementById('dlg-result');
+
+  alertBtn.addEventListener('click', () => {
+    alert('This is a native alert from the test page.');
+  });
+
+  confirmBtn.addEventListener('click', () => {
+    const ok = confirm('Do you accept this test confirmation?');
+    dlgResult.style.display = 'block';
+    dlgResult.textContent = ok ? 'User accepted the confirmation.' : 'User cancelled the confirmation.';
+    setTimeout(() => dlgResult.style.display = 'none', 4000);
+  });
+
+  // ---------- Child window ----------
+  document.getElementById('open-child').addEventListener('click', () => {
+    window.open('child-window.html', 'test-child', 'width=600,height=480');
+  });
+
+  // ---------- Simple navigation: open an example page in a new tab ----------
+  document.getElementById('open-new-page').addEventListener('click', () => {
+    window.open('child-window.html', '_blank');
+  });
+
+  // ---------- Form registration ----------
+  const regSuccess = document.getElementById('reg-success');
+  const regError = document.getElementById('reg-error');
+
+  document.getElementById('submit-reg').addEventListener('click', () => {
+    const name = document.getElementById('first_name').value.trim();
+    const email = document.getElementById('email_addr').value.trim();
+    const phone = document.getElementById('phone').value.trim();
+
+    regSuccess.style.display = 'none';
+    regError.style.display = 'none';
+
+    if (!name || !email || !phone) {
+      regError.style.display = 'block';
+      regError.textContent = 'Please fill all fields before registering.';
+      return;
+    }
+    if (!email.includes('@')) {
+      regError.style.display = 'block';
+      regError.textContent = 'Please provide a valid email address.';
+      return;
+    }
+
+    regSuccess.style.display = 'block';
+    regSuccess.textContent = `Thanks ${name}! We registered ${email} — phone ${phone}.`;
+  });
+
+  document.getElementById('clear-reg').addEventListener('click', () => {
+    document.getElementById('first_name').value = '';
+    document.getElementById('email_addr').value = '';
+    document.getElementById('phone').value = '';
+    regSuccess.style.display = 'none';
+    regError.style.display = 'none';
+  });
+
+  // allow keyboard testers to focus btn-hover
+  btnHover.tabIndex = 0;
+</script>
+</body>
+</html>
